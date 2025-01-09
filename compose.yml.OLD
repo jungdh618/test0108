@@ -1,0 +1,48 @@
+services:
+  httpd:
+    build:
+      context: .
+      dockerfile: Dockerfile-httpd
+    ports:
+      - "80:80"
+    networks:
+      - app-network
+    depends_on:
+      - tomcat
+    environment:
+      - TOMCAT_HOST=tomcat
+
+  tomcat:
+    build:
+      context: .
+      dockerfile: Dockerfile-tomcat
+    ports:
+      - "8080:8080"
+    environment:
+      - DB_HOST=mariadb
+      - DB_PORT=3306
+      - DB_NAME=mydb
+      - DB_USER=user
+      - DB_PASSWORD=password
+    networks:
+      - app-network
+    depends_on:
+      - mariadb
+
+  mariadb:
+    build:
+      context: .
+      dockerfile: Dockerfile-mariadb
+    environment:
+      - MYSQL_ROOT_PASSWORD=root_password
+      - MYSQL_DATABASE=mydb
+      - MYSQL_USER=user
+      - MYSQL_PASSWORD=password
+    ports:
+      - "3306:3306"
+    networks:
+      - app-network
+
+networks:
+  app-network:
+    driver: bridge
