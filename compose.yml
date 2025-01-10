@@ -12,26 +12,78 @@ services:
     build:
       context: .
       dockerfile: Dockerfile-tomcat
+    volumes:
+      - ./mariadb-java-client-3.1.0.jar:/usr/local/tomcat/lib/mariadb-java-client-3.1.0.jar
+      - ./warfile/target/my-webapp-1.0-SNAPSHOT.war:/usr/local/tomcat/webapps/my-webapp-1.0-SNAPSHOT.war
+      - ./webapp:/usr/local/tomcat/webapps/ROOT
     ports:
       - "8080:8080" 
     environment:
       - DB_HOST=mariadb
       - DB_PORT=3306
-      - DB_NAME=mydb
+      - DB_NAME=mysql
       - DB_USER=user
       - DB_PASSWORD=password
     depends_on:
-      - mariadb
+      - mariadb-master
+  tomcat2:
+    build:
+      context: .
+      dockerfile: Dockerfile-tomcat
+    volumes:
+      - ./mariadb-java-client-3.1.0.jar:/usr/local/tomcat/lib/mariadb-java-client-3.1.0.jar
+      - ./warfile/target/my-webapp-1.0-SNAPSHOT.war:/usr/local/tomcat/webapps/my-webapp-1.0-SNAPSHOT.war
+      - ./webapp:/usr/local/tomcat/webapps/ROOT/
+    ports:
+      - "8081:8080"
+    environment:
+      - DB_HOST=mariadb
+      - DB_PORT=3306
+      - DB_NAME=mysql
+      - DB_USER=user
+      - DB_PASSWORD=password
+    depends_on:
+      - mariadb-master
 
-  mariadb:
+  ngrok:
+    image: wernight/ngrok
+    container_name: ngrok
+    environment:
+      - NGROK_AUTHTOKEN=2rOZ8C0qyycomwYBZMJuFxZbN7g_7L2y7ZCUfVAXMtPKx8CCw
+      - NGROK_REGION=us
+    command: ngrok http nginx:80
+    ports:
+      - "4040:4040"
+    depends_on:
+      - nginx
+ 
+  mariadb-master:
     build:
       context: .
       dockerfile: Dockerfile-mariadb
     environment:
       - MYSQL_ROOT_PASSWORD=root_password
-      - MYSQL_DATABASE=mydb
-      - MYSQL_USER=user
-      - MYSQL_PASSWORD=password
+    volumes:
+      - master_data:/var/lib/mysql
+      - ./main/master.cnf:/etc/mysql/conf.d/custom.cnf
     ports:
-      - "3306:3306" 
+      - "3306:3306"
+
+  mariadb-slave:
+    build:
+      context: .
+      dockerfile: Dockerfile-mariadb
+    environment:
+      - MYSQL_ROOT_PASSWORD=root_password
+    volumes:
+      - slave_data:/var/lib/mysql
+      - ./sub/slave.cnf:/etc/mysql/conf.d/custom.cnf
+    ports:
+      - "3307:3306"
+    depends_on:
+      - mariadb-master
+
+volumes:
+  master_data:
+  slave_data:
 

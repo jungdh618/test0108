@@ -1,0 +1,117 @@
+<%@ page import="java.sql.*, java.io.*" %>
+<%@ page contentType="text/html; charset=UTF-8" %>
+<%@ page pageEncoding="UTF-8" %>
+
+
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>도서 정보 보기</title>
+</head>
+<body>
+
+    <div class="container">
+
+        <!-- 알파벳 버튼들 -->
+        <button onclick="window.location.href='index2.jsp'">ㄱ</button>
+        <button onclick="window.location.href='index3.jsp'">ㄴ</button>
+        <button onclick="window.location.href='index4.jsp'">ㄷ</button>
+        <button onclick="window.location.href='index5.jsp'">ㄹ</button>
+        <button onclick="window.location.href='index6.jsp'">ㅁ</button>
+        <button onclick="window.location.href='index7.jsp'">ㅂ</button>
+        <button onclick="window.location.href='index8.jsp'">ㅅ</button>
+        <button onclick="window.location.href='index9.jsp'">ㅇ</button>
+        <button onclick="window.location.href='index10.jsp'">ㅈ</button>
+        <button onclick="window.location.href='index11.jsp'">ㅊ</button>
+        <button onclick="window.location.href='index12.jsp'">ㅋ</button>
+        <button onclick="window.location.href='index13.jsp'">ㅌ</button>
+        <button onclick="window.location.href='index14.jsp'">ㅍ</button>
+        <button onclick="window.location.href='index15.jsp'">ㅎ</button>
+
+        <div class="table-wrapper">
+            <%
+                int pageNumber = 1;
+                if (request.getParameter("page") != null) {
+                    pageNumber = Integer.parseInt(request.getParameter("page"));
+                }
+
+                int booksPerPage = 10;
+                int offset = (pageNumber - 1) * booksPerPage;
+
+                String dbUrl = "jdbc:mariadb://mariadb:3306/mysql";
+                String dbUser = "user";
+                String dbPassword = "password";
+                Connection conn = null;
+                Statement stmt = null;
+                ResultSet rs = null;
+
+                try {
+                    Class.forName("org.mariadb.jdbc.Driver");
+
+                    conn = DriverManager.getConnection(dbUrl, dbUser, dbPassword);
+                    stmt = conn.createStatement();
+
+                    String sql = "SELECT TITLE, WRITER, SORT, ISBN FROM books LIMIT " + booksPerPage + " OFFSET " + offset;
+                    rs = stmt.executeQuery(sql);
+
+                    out.println("<table>");
+                    out.println("<tr><th>Title</th><th>Writer</th><th>Sort</th><th>ISBN</th></tr>");
+                    while (rs.next()) {
+                        out.println("<tr>");
+                        out.println("<td>" + rs.getString("TITLE") + "</td>");
+                        out.println("<td>" + rs.getString("WRITER") + "</td>");
+                        out.println("<td>" + rs.getString("SORT") + "</td>");
+                        out.println("<td>" + rs.getString("ISBN") + "</td>");
+                        out.println("</tr>");
+                    }
+                    out.println("</table>");
+
+                    String countSql = "SELECT COUNT(*) AS total FROM books";
+                    rs = stmt.executeQuery(countSql);
+                    int totalBooks = 0;
+                    if (rs.next()) {
+                        totalBooks = rs.getInt("total");
+                    }
+
+                    int totalPages = (int) Math.ceil(totalBooks / (double) booksPerPage);
+
+                    out.println("<div class='pagination'>");
+                    if (pageNumber > 1) {
+                        out.println("<a href='?page=" + (pageNumber - 1) + "'>&laquo; 이전</a>");
+                    }
+                    for (int i = 1; i <= totalPages; i++) {
+                        if (i == pageNumber) {
+                            out.println("<a href='?page=" + i + "' style='background-color: #45a049;'>" + i + "</a>");
+                        } else {
+                            out.println("<a href='?page=" + i + "'>" + i + "</a>");
+                        }
+                    }
+                    if (pageNumber < totalPages) {
+                        out.println("<a href='?page=" + (pageNumber + 1) + "'>다음 &raquo;</a>");
+                    }
+                    out.println("</div>");
+
+                } catch (SQLException e) {
+                    e.printStackTrace();
+                    out.println("Database error: " + e.getMessage());
+                } catch (ClassNotFoundException e) {
+                    e.printStackTrace();
+                    out.println("JDBC Driver not found: " + e.getMessage());
+                } finally {
+                    try {
+                        if (rs != null) rs.close();
+                        if (stmt != null) stmt.close();
+                        if (conn != null) conn.close();
+                    } catch (SQLException e) {
+                        e.printStackTrace();
+                    }
+                }
+            %>
+        </div>
+    </div>
+
+</body>
+</html>
+
